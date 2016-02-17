@@ -1,8 +1,12 @@
 #!/usr/bin/python
 import RPi.GPIO as GPIO
 import time
+
+#this script takes input from two buttons
+#it lights up LED's based on which button is being pressed
+
+#GPIO Declarations
 GPIO.setmode(GPIO.BCM)
-buttonDown = False
 lbutton = 26
 rbutton = 19
 GPIO.setup(lbutton, GPIO.IN, pull_up_down=GPIO.PUD_UP)
