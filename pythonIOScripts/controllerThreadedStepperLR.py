@@ -1,4 +1,9 @@
 #!/usr/bin/python
+# 
+# Creator     : Steven Cregan
+# Date        : 02/21/16
+# Description : This program will move a small vehicle forward 
+#               and backwards as controlled by an Xbox360 wireless controller
 import RPi.GPIO as GPIO
 import time
 import os, sys
