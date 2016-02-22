@@ -7,96 +7,109 @@
 import RPi.GPIO as GPIO
 import time
 import os, sys
-from multiprocessing import Process
 import threading
 # Credit to Zephod on github
 # https://github.com/zephod/lego-pi
 sys.path.insert(0, '/home/pi/')
 from legopi.lib import xbox_read
-GPIO.setmode(GPIO.BCM)
 
+GPIO.setmode(GPIO.BCM)
+# Set the pin positions of buttons
 lbutton = 26
 rbutton = 19
+# Set the buttons as Pull-UP current, and input
 GPIO.setup(lbutton, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(rbutton, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+# Set the pin positions of the LED's
 lled = 6
 rled = 13
+# Set LED's as output
 GPIO.setup(lled, GPIO.OUT)
 GPIO.setup(rled, GPIO.OUT)
 
+# Since we're using stepper motors, declare max switching speed
 motorspeed = 8
 delay = motorspeed/10000.0
 
-#blue
+# Just some wire colors for personal clarity
+# blue
 motorPin1 = 18
-#white
+# white
 motorPin2 = 23
-#yellow
+# yellow
 motorPin3 = 24
-#orange
+# orange
 motorPin4 = 25
 
+# Set the motor pins as output
 GPIO.setup(motorPin1, GPIO.OUT)
 GPIO.setup(motorPin2, GPIO.OUT)
 GPIO.setup(motorPin3, GPIO.OUT)
 GPIO.setup(motorPin4, GPIO.OUT)
 
+# Declare and define "backwards" motion
 def backward(arg1, stop_event):
-  while(not stop_event.is_set()):
-    time.sleep(delay)
-    setStep(1,0,0,0)
-    time.sleep(delay)
-    setStep(1,0,0,1)
-    time.sleep(delay)
-    setStep(0,0,0,1)
-    time.sleep(delay)
-    setStep(0,0,1,1)
-    time.sleep(delay)
-    setStep(0,0,1,0)
-    time.sleep(delay)
-    setStep(0,1,1,0)
-    time.sleep(delay)
-    setStep(0,1,0,0)
-    time.sleep(delay)
-    setStep(1,1,0,0)
-    time.sleep(delay)
+    while(not stop_event.is_set()):
+        time.sleep(delay)
+        setStep(1,0,0,0)
+        time.sleep(delay)
+        setStep(1,0,0,1)
+        time.sleep(delay)
+        setStep(0,0,0,1)
+        time.sleep(delay)
+        setStep(0,0,1,1)
+        time.sleep(delay)
+        setStep(0,0,1,0)
+        time.sleep(delay)
+        setStep(0,1,1,0)
+        time.sleep(delay)
+        setStep(0,1,0,0)
+        time.sleep(delay)
+        setStep(1,1,0,0)
+        time.sleep(delay)
 
+# Declare and define "forwards" motion
 def forward(arg1, stop_event):
-  while(not stop_event.is_set()):
-    time.sleep(delay)
-    setStep(1,0,0,0)
-    time.sleep(delay)
-    setStep(1,1,0,0)
-    time.sleep(delay)
-    setStep(0,1,0,0)
-    time.sleep(delay)
-    setStep(0,1,1,0)
-    time.sleep(delay)
-    setStep(0,0,1,0)
-    time.sleep(delay)
-    setStep(0,0,1,1)
-    time.sleep(delay)
-    setStep(0,0,0,1)
-    time.sleep(delay)
-    setStep(1,0,0,1)
-    time.sleep(delay)
+    while(not stop_event.is_set()):
+        time.sleep(delay)
+        setStep(1,0,0,0)
+        time.sleep(delay)
+        setStep(1,1,0,0)
+        time.sleep(delay)
+        setStep(0,1,0,0)
+        time.sleep(delay)
+        setStep(0,1,1,0)
+        time.sleep(delay)
+        setStep(0,0,1,0)
+        time.sleep(delay)
+        setStep(0,0,1,1)
+        time.sleep(delay)
+        setStep(0,0,0,1)
+        time.sleep(delay)
+        setStep(1,0,0,1)
+        time.sleep(delay)
 
+# The setStep function actually sets the voltage on the pins.
+# since it's being used for STEPPER motors, take 4 args (1 or 0)
 def setStep(w1, w2, w3, w4):
     GPIO.output(motorPin1, w1)
     GPIO.output(motorPin2, w2)
     GPIO.output(motorPin3, w3)
     GPIO.output(motorPin4, w4)
 
+# This function is here as a guarantee the motors will be
+# released properly, with all pins set low
 def off():
-  setStep(0,0,0,0)
-  time.sleep(delay)
+    setStep(0,0,0,0)
+    time.sleep(delay)
 
-if __name__ == "__main__":
-  #store controller values
+def main():
+  # Store controller values
   temp = ""
   A = 1
   B = 1
-#  pForward = Process(target=forward)
+  # Declare our threads
+  # Don't forget, set the threads as daemon to keep them from persisting
   tForward_stop = threading.Event()
   tForward = threading.Thread(target = forward, args=(1, tForward_stop))
   tForward.daemon = True
@@ -206,3 +219,6 @@ if __name__ == "__main__":
             print('error occured')
             print sys.exc_info()
         off()
+
+if __name__ == "__main__":
+    main()
