@@ -197,12 +197,10 @@ def main():
                     pass
                 elif (Y1  > 0):
                     throttle = abs(float(32768/Y1) / 1000.0)
-                    print throttle, delay
                     input_state_L = 0
                     pass
                 elif (Y1  < 0):
                     throttle = abs(float(32768/Y1) / 1000.0)
-                    print throttle, delay
                     input_state_R = 0
                     pass
 
