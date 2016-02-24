@@ -2,14 +2,11 @@
 # 
 # Creator     : Steven Cregan
 # Date        : 02/21/16
-# Description : This program will move a small vehicle forwards,
-#               backwards, left, and right as controlled by 
-#               an Xbox360 wireless controller
+# Description : This program will move a small vehicle forward 
+#               and backwards as controlled by an Xbox360 wireless controller
 import RPi.GPIO as GPIO
 import time
-import os
-import sys
-import re
+import os, sys
 import threading
 # Credit to Zephod on github
 # https://github.com/zephod/lego-pi
@@ -17,7 +14,6 @@ sys.path.insert(0, '/home/pi/')
 from legopi.lib import xbox_read
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
 # Set the pin positions of buttons
 lbutton = 26
 rbutton = 19
@@ -32,42 +28,24 @@ GPIO.setup(lled, GPIO.OUT)
 GPIO.setup(rled, GPIO.OUT)
 
 # Since we're using stepper motors, declare max switching speed
-motorspeed = 10
+motorspeed = 8
 delay = motorspeed/10000.0
 
-# Right Side Motors
 # Just some wire colors for personal clarity
 # blue
-rightMotorPin1 = 18
+motorPin1 = 18
 # white
-rightMotorPin2 = 23
+motorPin2 = 23
 # yellow
-rightMotorPin3 = 24
+motorPin3 = 24
 # orange
-rightMotorPin4 = 25
+motorPin4 = 25
 
 # Set the motor pins as output
-GPIO.setup(rightMotorPin1, GPIO.OUT)
-GPIO.setup(rightMotorPin2, GPIO.OUT)
-GPIO.setup(rightMotorPin3, GPIO.OUT)
-GPIO.setup(rightMotorPin4, GPIO.OUT)
-
-# Left Side Motors
-# Just some wire colors for personal clarity
-# blue
-leftMotorPin1 =  4
-# white
-leftMotorPin2 = 17
-# yellow
-leftMotorPin3 = 27
-# orange
-leftMotorPin4 = 22
-
-# Set the motor pins as output
-GPIO.setup(leftMotorPin1, GPIO.OUT)
-GPIO.setup(leftMotorPin2, GPIO.OUT)
-GPIO.setup(leftMotorPin3, GPIO.OUT)
-GPIO.setup(leftMotorPin4, GPIO.OUT)
+GPIO.setup(motorPin1, GPIO.OUT)
+GPIO.setup(motorPin2, GPIO.OUT)
+GPIO.setup(motorPin3, GPIO.OUT)
+GPIO.setup(motorPin4, GPIO.OUT)
 
 # Declare and define "backwards" motion
 def backward(arg1, stop_event):
@@ -114,18 +92,10 @@ def forward(arg1, stop_event):
 # The setStep function actually sets the voltage on the pins.
 # since it's being used for STEPPER motors, take 4 args (1 or 0)
 def setStep(w1, w2, w3, w4):
-
-    GPIO.output( rightMotorPin1, w1)
-    GPIO.output(  leftMotorPin1, w4)
-
-    GPIO.output( rightMotorPin2, w2)
-    GPIO.output(  leftMotorPin2, w3)
-
-    GPIO.output( rightMotorPin3, w3)
-    GPIO.output(  leftMotorPin3, w2)
-
-    GPIO.output( rightMotorPin4, w4)
-    GPIO.output(  leftMotorPin4, w1)
+    GPIO.output(motorPin1, w1)
+    GPIO.output(motorPin2, w2)
+    GPIO.output(motorPin3, w3)
+    GPIO.output(motorPin4, w4)
 
 # This function is here as a guarantee the motors will be
 # released properly, with all pins set low
@@ -135,10 +105,9 @@ def off():
 
 def main():
     # Store controller values
-    A = 0
-    B = 0
-    Y1 = 0
-    X1 = 0
+    temp = ""
+    A = 1
+    B = 1
     # Declare our threads
     # Don't forget, set the threads as daemon to keep them from persisting
     tForward_stop = threading.Event()
@@ -151,68 +120,42 @@ def main():
 
     while True:
         for event in xbox_read.event_stream(deadzone=12000):
-#            print str(event)
+            temp = str(event)
+            print temp
             input_state_L = GPIO.input(lbutton)
             input_state_R = GPIO.input(rbutton)
+            print ("{0}  ,  {1}").format(input_state_L, input_state_R)
     
-            if  ((event.key == "A") and (event.value == 1)):
-                A = 1
-                pass
-            elif((event.key == "A") and (event.value == 0)):
+            if(temp == "Event(A,1,0)"):
                 A = 0
-                pass
-            elif((event.key == "B") and (event.value == 1)):
-                B = 1
-                pass
-            elif((event.key == "B") and (event.value == 0)):
-                B = 0
-                pass
-            elif((event.key == "Y1")):
-                Y1 = event.value
-                pass
-            else:
-                pass
-
-            if   (A  == 0):
-                input_state_L = 1
-                pass
-            elif (A  == 1):
                 input_state_L = 0
-                pass
 
-            if   (B  == 0):
-                input_state_R = 1
-                pass
-            elif (B  == 1):
+            elif(temp == "Event(A,0,1)"):
+                A = 1
+                input_state_L = 1
+
+            elif(temp == "Event(B,1,0)"):
+                B = 0 
                 input_state_R = 0
-                pass
 
-            if   (A == 0) and (B == 0):
-                if (Y1 == 0):
-                    input_state_L = 1
-                    input_state_R = 1
-                    pass
-                elif (Y1  > 0):
-                    input_state_L = 0
-                    pass
-                elif (Y1  < 0):
-                    input_state_R = 0
-                    pass
+            elif(temp == "Event(B,0,1)"):
+                B = 1
+                input_state_R = 1
 
-            if   (X1 == 0):
+            else:
+                input_state_L = A
+                input_state_R = B
                 pass
-            elif (X1  > 0):
-                pass
-            elif (X1  < 0):
-                pass
+            input_state_L = A
+            input_state_R = B
 
-#            print ("A = {0} , B = {1}").format(A, B)
-#            print ("{0}  ,  {1}").format(input_state_L, input_state_R)
+            print ("A = {0} , B = {1}").format(A, B)
+            print ("{0}  ,  {1}").format(input_state_L, input_state_R)
 
             if (input_state_L == False and input_state_R == False):
                 GPIO.output(rled,1)
                 GPIO.output(lled,1)
-#                print(threading.enumerate())
+                print(threading.enumerate())
                 try:
                     tForward_stop.set()
                     if (tForward.is_alive()==True):
@@ -228,16 +171,16 @@ def main():
             elif (input_state_L == False and input_state_R == True):
                 GPIO.output(rled,0)
                 GPIO.output(lled,1)
-#                print "forward"
-#                print (threading.enumerate())
+                print "forward"
+                print (threading.enumerate())
                 try:
                     if (tForward.is_alive()!=True):
-#                        print ('start thread')
+                        print ('start thread')
                         tForward_stop.clear()
-#                        print tForward_stop.is_set()
+                        print tForward_stop.is_set()
                         tForward = threading.Thread(target = forward, args=(1, tForward_stop))
                         tForward.start()
-#                        print (threading.enumerate())
+                        print (threading.enumerate())
                 except:
                     print('error occured')
                     print sys.exc_info()
@@ -245,16 +188,16 @@ def main():
             elif (input_state_R == False and input_state_L == True):
                 GPIO.output(lled,0)
                 GPIO.output(rled,1)
-#                print "backward"
-#                print (threading.enumerate())
+                print "backward"
+                print (threading.enumerate())
                 try:
                     if (tBackward.is_alive()!=True):
-#                        print ('start thread')
+                        print ('start thread')
                         tBackward_stop.clear()
-#                        print tBackward_stop.is_set()
+                        print tBackward_stop.is_set()
                         tBackward = threading.Thread(target = backward, args=(2, tBackward_stop))
                         tBackward.start()
-#                        print (threading.enumerate())
+                        print (threading.enumerate())
                 except:
                     print('error occured')
                     print sys.exc_info()
@@ -263,8 +206,8 @@ def main():
             else:
                 GPIO.output(lled,0)
                 GPIO.output(rled,0)
-#                print('button stopped')
-#                print(threading.enumerate())
+                print('button stopped')
+                print(threading.enumerate())
                 try:
                     tForward_stop.set()
                     if (tForward.is_alive()==True):
