@@ -17,7 +17,6 @@ sys.path.insert(0, '/home/pi/')
 from legopi.lib import xbox_read
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
 # Set the pin positions of buttons
 lbutton = 26
 rbutton = 19
@@ -34,6 +33,7 @@ GPIO.setup(rled, GPIO.OUT)
 # Since we're using stepper motors, declare max switching speed
 motorspeed = 10
 delay = motorspeed/10000.0
+throttle = delay
 
 # Right Side Motors
 # Just some wire colors for personal clarity
@@ -72,44 +72,44 @@ GPIO.setup(leftMotorPin4, GPIO.OUT)
 # Declare and define "backwards" motion
 def backward(arg1, stop_event):
     while(not stop_event.is_set()):
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(1,0,0,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(1,0,0,1)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,0,0,1)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,0,1,1)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,0,1,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,1,1,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,1,0,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(1,1,0,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
 
 # Declare and define "forwards" motion
 def forward(arg1, stop_event):
     while(not stop_event.is_set()):
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(1,0,0,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(1,1,0,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,1,0,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,1,1,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,0,1,0)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,0,1,1)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(0,0,0,1)
-        time.sleep(delay)
+        stop_event.wait(throttle)
         setStep(1,0,0,1)
-        time.sleep(delay)
+        stop_event.wait(throttle)
 
 # The setStep function actually sets the voltage on the pins.
 # since it's being used for STEPPER motors, take 4 args (1 or 0)
@@ -134,6 +134,9 @@ def off():
     time.sleep(delay)
 
 def main():
+
+    global throttle
+
     # Store controller values
     A = 0
     B = 0
@@ -193,9 +196,13 @@ def main():
                     input_state_R = 1
                     pass
                 elif (Y1  > 0):
+                    throttle = abs(float(32768/Y1) / 1000.0)
+                    print throttle, delay
                     input_state_L = 0
                     pass
                 elif (Y1  < 0):
+                    throttle = abs(float(32768/Y1) / 1000.0)
+                    print throttle, delay
                     input_state_R = 0
                     pass
 
@@ -278,4 +285,10 @@ def main():
                 off()
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "Interrupt"
+    finally:
+        GPIO.cleanup()
+    
