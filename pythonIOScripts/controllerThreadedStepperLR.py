@@ -116,16 +116,16 @@ def forward(arg1, stop_event):
 def setStep(w1, w2, w3, w4):
 
     GPIO.output( rightMotorPin1, w1)
-    GPIO.output(  leftMotorPin1, w4)
+    GPIO.output( leftMotorPin1,  w4)
 
     GPIO.output( rightMotorPin2, w2)
-    GPIO.output(  leftMotorPin2, w3)
+    GPIO.output( leftMotorPin2,  w3)
 
     GPIO.output( rightMotorPin3, w3)
-    GPIO.output(  leftMotorPin3, w2)
+    GPIO.output( leftMotorPin3,  w2)
 
     GPIO.output( rightMotorPin4, w4)
-    GPIO.output(  leftMotorPin4, w1)
+    GPIO.output( leftMotorPin4,  w1)
 
 # This function is here as a guarantee the motors will be
 # released properly, with all pins set low
